@@ -43,10 +43,10 @@ class NotionSync:
         db_id = self._db_id("runs")
 
         properties = {
-            "Name": {"title": [{"text": {"content": run_id}}]},
-            "As Of": {"date": {"start": as_of.isoformat()}},
-            "Status": {"select": {"name": stage}},
-            "Survivorship": {"checkbox": survivorship},
+            "Run id": {"title": [{"text": {"content": run_id}}]},
+            "As of date": {"date": {"start": as_of.isoformat()}},
+            "Run status": {"select": {"name": stage}},
+            "Survivorship quality": {"select": {"name": "Biased" if survivorship else "Free"}},
         }
         res = client.pages.create(parent={"database_id": db_id}, properties=properties)
         return res["id"]
@@ -58,12 +58,12 @@ class NotionSync:
         db_id = self._db_id("signals")
 
         for sig in signals:
+            unique_id = f"{self.run.run_id[:8]}-{sig['ticker']}"
             properties = {
-                "Name": {"title": [{"text": {"content": sig["ticker"]}}]},
-                "Score": {"number": sig["score"]},
-                "Liquidity": {"number": sig["liquidity"]},
-                "As Of": {"date": {"start": self.run.as_of_date.isoformat()}},
-                "Run ID": {"rich_text": [{"text": {"content": self.run.run_id}}]},
+                "Id": {"title": [{"text": {"content": unique_id}}]},
+                "Ticker ": {"rich_text": [{"text": {"content": sig["ticker"]}}]},
+                "Composite score": {"number": sig["score"]},
+                "Signal date": {"date": {"start": self.run.as_of_date.isoformat()}},
             }
             client.pages.create(parent={"database_id": db_id}, properties=properties)
 
@@ -75,11 +75,9 @@ class NotionSync:
 
         for pos in positions:
             properties = {
-                "Name": {"title": [{"text": {"content": pos["ticker"]}}]},
-                "Weight": {"number": pos["weight"]},
-                "Liquidity Cap": {"number": pos["liquidity_cap"]},
-                "As Of": {"date": {"start": self.run.as_of_date.isoformat()}},
-                "Run ID": {"rich_text": [{"text": {"content": self.run.run_id}}]},
+                "Ticker": {"title": [{"text": {"content": pos["ticker"]}}]},
+                "Target weight": {"number": pos["weight"]},
+                "Entry date": {"date": {"start": self.run.as_of_date.isoformat()}},
             }
             client.pages.create(parent={"database_id": db_id}, properties=properties)
 
@@ -91,7 +89,7 @@ class NotionSync:
         title = f"Run {summary['run_id']}"
         children = _build_summary_blocks(summary)
         properties = {
-            "Name": {
+            "Run id": {
                 "title": [{"text": {"content": title}}],
             },
         }
