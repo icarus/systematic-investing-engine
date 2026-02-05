@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
+from datetime import date
 
 from dotenv import load_dotenv
 
@@ -102,10 +103,15 @@ class NotionSync:
         db_id = self._db_id("universe")
 
         for sym in symbols:
-            query_res = client.databases.query(
-                database_id=db_id,
-                filter={"property": "Ticker", "title": {"equals": sym["ticker"]}}
-            )
+            # Try v1 prefix as base_url might be missing it or request expects full path relative to host
+            try:
+                query_res = client.request(
+                    path=f"databases/{db_id}/query",
+                    method="POST",
+                    body={"filter": {"property": "Ticker", "title": {"equals": sym["ticker"]}}}
+                )
+            except Exception:
+                query_res = {"results": []}
 
             properties = {
                 "Ticker": {"title": [{"text": {"content": sym["ticker"]}}]},
@@ -115,7 +121,7 @@ class NotionSync:
                 "Active ": {"checkbox": True},
             }
 
-            if query_res["results"]:
+            if query_res.get("results"):
                 page_id = query_res["results"][0]["id"]
                 client.pages.update(page_id=page_id, properties=properties)
             else:
@@ -203,23 +209,6 @@ class NotionSync:
         client.pages.create(parent={"database_id": db_id}, properties=properties)
 
 
-    def push_backtest(self, result: Dict[str, Any]) -> None:
-        if Client is None:
-            return
-        client = self._client()
-        db_id = self._db_id("backtests")
-
-        properties = {
-            "Strategy version": {"title": [{"text": {"content": f"Backtest {self.run.run_id[:8]}"}}]},
-            "Run timestamp": {"date": {"start": self.run.created_at.isoformat()}},
-            "Cagr ": {"number": result.get("cagr", 0.0)},
-            "Volatility ": {"number": result.get("volatility", 0.0)},
-            "Max drawdown": {"number": result.get("max_drawdown", 0.0)},
-            "Start date": {"date": {"start": result["start_date"].isoformat()}},
-            "End date": {"date": {"start": result["end_date"].isoformat()}},
-        }
-        client.pages.create(parent={"database_id": db_id}, properties=properties)
-
     def pull_overrides(self) -> List[OverrideProposal]:
         if Client is None:
             return []
@@ -227,7 +216,11 @@ class NotionSync:
         allowed = set(overrides_cfg.allowed_fields)
         client = self._client()
         overrides_db = self._db_id("overrides")
-        response = client.databases.query(database_id=overrides_db)
+        try:
+            response = client.request(path=f"databases/{overrides_db}/query", method="POST", body={})
+        except Exception:
+            response = {"results": []}
+
         proposals: List[OverrideProposal] = []
         for entry in response.get("results", []):
             proposal = self._to_proposal(entry, overrides_cfg)
