@@ -1,0 +1,16 @@
+universe:
+  name: "IPSA"
+  description: "Sample IPSA large-cap tickers"
+  constituents:
+    - ticker: "BSANTANDER.SN"
+      name: "Banco Santander Chile"
+      currency: "CLP"
+      sector: "Financials"
+    - ticker: "CCU.SN"
+      name: "Compania Cervecerias Unidas"
+      currency: "CLP"
+      sector: "Consumer Staples"
+    - ticker: "ENELAM.SN"
+      name: "Enel Americas"
+      currency: "CLP"
+      sector: "Utilities"

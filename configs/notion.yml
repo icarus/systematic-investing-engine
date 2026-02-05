@@ -1,0 +1,21 @@
+notion:
+  databases:
+    universe: "17e8c9f5-bd5d-4fee-bcfd-987b636ec516"
+    runs: "ebc567f5-2b9c-48ee-b906-891ecf7230af"
+    signals: "7eb2f691-139c-4c74-9d30-fe4bd23346bd"
+    portfolio_state: "8f236ef2-ccf4-4a39-9f5b-12f5f7aabc67"
+    trades_log: "00649d96-1b84-4d5f-87c3-67d6fd5f0519"
+    backtests: "19a8bd91-4c82-4ba8-97e4-a48216d228d8"
+    overrides: "c10c2784-1570-4035-a728-1ca76e4a1bc6"
+    progress_tracker: "dab03d11-c89c-4abf-9630-3730c8ef8202"
+    research_journal: "b8aeccdd-8db8-46f7-926d-be928279c116"
+  overrides:
+    allowed_fields:
+      - strategy.factor_weights.momentum_12_1
+      - strategy.factor_weights.momentum_6_1
+      - strategy.liquidity_filters.median_traded_value_clp
+      - universe.ticker_status
+    field_property: "Field"
+    value_property: "Value"
+    enabled_property: "Override Enabled"
+    author_property: "Author"

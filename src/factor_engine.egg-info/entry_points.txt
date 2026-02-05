@@ -1,0 +1,2 @@
+[console_scripts]
+factor-engine = factor_engine.cli:app

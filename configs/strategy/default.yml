@@ -1,0 +1,15 @@
+strategy:
+  name: "default"
+  rebalance_cadence: "monthly"
+  execution_timing:
+    signal_time: "month_end_close"
+    execution_time: "next_open"
+    transaction_cost_bps: 20
+    slippage_bps: 5
+  liquidity_filters:
+    median_traded_value_clp: 20000000
+    lookback_days: 90
+    max_weight_pct_of_adv: 5
+  transaction_costs:
+    commission_bps: 10
+    slippage_bps: 5

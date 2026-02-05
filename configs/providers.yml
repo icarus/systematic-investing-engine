@@ -1,0 +1,6 @@
+providers:
+  - id: "yahoo"
+    module: "factor_engine.providers.yahoo"
+    retries: 3
+    timeout: 30
+    base_url: null

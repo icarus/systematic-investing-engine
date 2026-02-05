@@ -1,3 +1,30 @@
+Metadata-Version: 2.4
+Name: factor-engine
+Version: 0.1.0
+Summary: Chilean multi-factor equity research engine
+Author-email: Systematic Investing Team <quant@example.com>
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: pydantic>=2.6
+Requires-Dist: typer>=0.12
+Requires-Dist: SQLAlchemy>=2.0
+Requires-Dist: pandas>=2.1
+Requires-Dist: numpy>=1.26
+Requires-Dist: yfinance>=0.2
+Requires-Dist: python-dotenv>=1.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: rich>=13.7
+Requires-Dist: requests>=2.31
+Requires-Dist: tabulate>=0.9
+Requires-Dist: notion-client>=2.2
+Requires-Dist: streamlit>=1.30
+Requires-Dist: plotly>=5.18
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: pytest-mock>=3.10; extra == "dev"
+Requires-Dist: ruff>=0.2; extra == "dev"
+Requires-Dist: mypy>=1.8; extra == "dev"
+
 # Factor Engine
 
 A deterministic, research-oriented multi-factor equity pipeline targeting Chilean IPSA constituents. The system ingests Yahoo Finance data, caches it in SQLite, computes validated factor signals, assembles liquidity-aware portfolios, and synchronizes snapshots to Notion dashboards with guarded overrides.
@@ -47,30 +74,18 @@ A deterministic, research-oriented multi-factor equity pipeline targeting Chilea
    ```bash
    factor-engine overrides-apply --allow-overrides
    ```
-9. **(Optional) Push run summary to Notion**
-   ```bash
-   factor-engine notion-push <RUN_ID>
-   ```
-10. **(Optional) Run full pipeline with overrides + Notion sync**
-    ```bash
-    factor-engine run-all --as-of 2024-12-31 --apply-overrides --push-notion
-    ```
 
 ## Configuration Files
 - `configs/providers.yml` – Provider registry (default: Yahoo).
 - `configs/universe/ipsa.yml` – Canonical IPSA universe constituents.
 - `configs/strategy/default.yml` – Strategy execution timing, liquidity filters, and transaction costs.
 - `configs/notion.yml` – Notion database IDs for dashboards, overrides, and tracking tables.
-- `configs/overrides_applied.yml` – Auto-managed overrides snapshot updated by `factor-engine overrides-apply`.
 - `data/universe_membership.csv` – Historical membership ranges (import via `factor-engine universe-import`).
 
 ## Notion Integration & Overrides
 - Store your Notion integration token in `.env` as `NOTION_TOKEN=ntn_...`. The CLI loads it automatically via `python-dotenv`.
 - Update `configs/notion.yml` if database IDs change, and define which fields are whitelisted for overrides (e.g., factor weights, liquidity filters).
 - Use `factor-engine overrides-apply --allow-overrides` to fetch enabled records from the Notion “Overrides” database. Only whitelisted fields with `Override Enabled = true` are logged to the `override_audit` table; the `--allow-overrides` flag acts as an explicit approval gate.
-- Approved overrides are written to `configs/overrides_applied.yml`, which `load_config_bundle` consumes automatically on future runs. You can inspect or version-control this file to audit changes.
-- `factor-engine notion-push <RUN_ID>` builds a summary of the selected run (as-of date, survivorship status, portfolio positions, backtest metrics) and creates a page in the Notion “Runs” database with a readable snapshot.
-- `factor-engine run-all --apply-overrides --push-notion` performs a full pipeline run, auto-applies any enabled overrides, and uploads the resulting run summary to Notion in one step.
 
 ## Structure
 ```
