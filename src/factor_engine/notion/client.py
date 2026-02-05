@@ -95,6 +95,131 @@ class NotionSync:
         }
         client.pages.create(parent=parent, properties=properties, children=children)
 
+    def push_universe(self, symbols: List[Dict[str, Any]]) -> None:
+        if Client is None:
+            return
+        client = self._client()
+        db_id = self._db_id("universe")
+
+        for sym in symbols:
+            query_res = client.databases.query(
+                database_id=db_id,
+                filter={"property": "Ticker", "title": {"equals": sym["ticker"]}}
+            )
+
+            properties = {
+                "Ticker": {"title": [{"text": {"content": sym["ticker"]}}]},
+                "Company name": {"rich_text": [{"text": {"content": sym.get("name") or ""}}]},
+                "Sector ": {"select": {"name": sym.get("sector") or "Unknown"}},
+                "Last synced": {"date": {"start": date.today().isoformat()}},
+                "Active ": {"checkbox": True},
+            }
+
+            if query_res["results"]:
+                page_id = query_res["results"][0]["id"]
+                client.pages.update(page_id=page_id, properties=properties)
+            else:
+                client.pages.create(parent={"database_id": db_id}, properties=properties)
+
+    def push_backtest(self, result: Dict[str, Any]) -> None:
+        if Client is None:
+            return
+        client = self._client()
+        db_id = self._db_id("backtests")
+
+        properties = {
+            "Strategy version": {"title": [{"text": {"content": f"Backtest {self.run.run_id[:8]}"}}]},
+            "Run timestamp": {"date": {"start": self.run.created_at.isoformat()}},
+            "Cagr ": {"number": result.get("cagr", 0.0)},
+            "Volatility ": {"number": result.get("volatility", 0.0)},
+            "Max drawdown": {"number": result.get("max_drawdown", 0.0)},
+            "Start date": {"date": {"start": result["start_date"].isoformat()}},
+            "End date": {"date": {"start": result["end_date"].isoformat()}},
+            "Universe ": {"rich_text": [{"text": {"content": "IPSA"}}]},
+        }
+        client.pages.create(parent={"database_id": db_id}, properties=properties)
+
+    def push_trades_log(self, trades: List[Dict[str, Any]]) -> None:
+        if Client is None:
+            return
+        client = self._client()
+        db_id = self._db_id("trades_log")
+
+        for trade in trades:
+            properties = {
+                "Ticker": {"title": [{"text": {"content": trade["ticker"]}}]},
+                "Action ": {"select": {"name": trade["action"]}}, # BUY/SELL
+                "Quantity ": {"number": trade["quantity"]},
+                "Execution price": {"number": trade["price"]},
+                "Trade date": {"date": {"start": trade["date"].isoformat()}},
+                "Run id": {"rich_text": [{"text": {"content": self.run.run_id}}]},
+            }
+            client.pages.create(parent={"database_id": db_id}, properties=properties)
+
+    def push_overrides(self, overrides: List[Dict[str, Any]]) -> None:
+        if Client is None:
+            return
+        client = self._client()
+        db_id = self._db_id("overrides")
+
+        for ov in overrides:
+            properties = {
+                "Parameter name": {"title": [{"text": {"content": ov["field"]}}]},
+                "New value": {"rich_text": [{"text": {"content": str(ov["value"])}}]},
+                "Override enabled": {"checkbox": ov["enabled"]},
+                "Override reason": {"rich_text": [{"text": {"content": ov.get("reason", "")}}]},
+                "Applied run id": {"rich_text": [{"text": {"content": self.run.run_id}}]},
+            }
+            client.pages.create(parent={"database_id": db_id}, properties=properties)
+
+    def push_progress_tracker(self, modules: List[Dict[str, Any]]) -> None:
+        if Client is None:
+            return
+        client = self._client()
+        db_id = self._db_id("progress_tracker")
+
+        for mod in modules:
+            properties = {
+                "Module name": {"title": [{"text": {"content": mod["name"]}}]},
+                "Status ": {"select": {"name": mod["status"]}},
+                "Completion percentage": {"number": mod["completion"]},
+                "Last updated": {"date": {"start": date.today().isoformat()}},
+            }
+            client.pages.create(parent={"database_id": db_id}, properties=properties)
+
+    def push_research_journal(self, entry: Dict[str, Any]) -> None:
+        if Client is None:
+            return
+        client = self._client()
+        db_id = self._db_id("research_journal")
+
+        properties = {
+            "Entry title": {"title": [{"text": {"content": entry["title"]}}]},
+            "Entry date": {"date": {"start": entry["date"].isoformat()}},
+            "Hypothesis ": {"rich_text": [{"text": {"content": entry["hypothesis"]}}]},
+            "Result summary": {"rich_text": [{"text": {"content": entry["result"]}}]},
+            "Decision ": {"select": {"name": entry["decision"]}},
+        }
+        client.pages.create(parent={"database_id": db_id}, properties=properties)
+
+
+    def push_backtest(self, result: Dict[str, Any]) -> None:
+        if Client is None:
+            return
+        client = self._client()
+        db_id = self._db_id("backtests")
+
+        properties = {
+            "Strategy version": {"title": [{"text": {"content": f"Backtest {self.run.run_id[:8]}"}}]},
+            "Run timestamp": {"date": {"start": self.run.created_at.isoformat()}},
+            "Cagr ": {"number": result.get("cagr", 0.0)},
+            "Volatility ": {"number": result.get("volatility", 0.0)},
+            "Max drawdown": {"number": result.get("max_drawdown", 0.0)},
+            "Start date": {"date": {"start": result["start_date"].isoformat()}},
+            "End date": {"date": {"start": result["end_date"].isoformat()}},
+        }
+        client.pages.create(parent={"database_id": db_id}, properties=properties)
+
     def pull_overrides(self) -> List[OverrideProposal]:
         if Client is None:
             return []
